@@ -84,7 +84,6 @@ export type VerifyOtpData = {
     platform: string
     phone: string
     upiHandle: string
-    email: string | null
   } | null
 }
 

@@ -4,6 +4,7 @@ import { z } from 'zod'
 import { prisma } from '../db.js'
 import { ok, fail } from '../http/envelope.js'
 import { validateBody } from '../middleware/validate.js'
+import { logger } from '../logger.js'
 
 const router = Router()
 
@@ -26,6 +27,7 @@ router.post('/verify-otp', validateBody(verifyOtpSchema), async (req, res) => {
       res.status(401).json(fail('INVALID_OTP', 'Wrong OTP. Use the code we sent (demo: 123456).'))
       return
     }
+    // Omit `email` here so OTP works even if `Worker.email` migration is not applied yet (column missing → Prisma error).
     const worker = await prisma.worker.findUnique({
       where: { phone },
       select: {
@@ -35,7 +37,6 @@ router.post('/verify-otp', validateBody(verifyOtpSchema), async (req, res) => {
         platform: true,
         phone: true,
         upiHandle: true,
-        email: true,
       },
     })
     const secret = process.env['JWT_SECRET']
@@ -50,7 +51,14 @@ router.post('/verify-otp', validateBody(verifyOtpSchema), async (req, res) => {
     )
     res.json(ok({ token, worker: worker ?? null }))
   } catch (error) {
-    res.status(500).json(fail('AUTH_VERIFY_OTP_FAILED', 'Unable to verify OTP', error))
+    logger.error({ err: error }, 'verify-otp failed')
+    res.status(500).json(
+      fail(
+        'AUTH_VERIFY_OTP_FAILED',
+        'Could not complete sign-in. Check the API database connection, run prisma migrate deploy, and ensure JWT_SECRET is set on the server.',
+        error instanceof Error ? error.message : error,
+      ),
+    )
   }
 })
 
