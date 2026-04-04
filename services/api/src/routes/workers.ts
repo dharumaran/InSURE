@@ -1,4 +1,3 @@
-import { Prisma } from '@prisma/client'
 import { Router } from 'express'
 import { z } from 'zod'
 import { prisma } from '../db.js'
@@ -54,8 +53,13 @@ router.post('/', validateBody(createWorkerSchema), async (req, res) => {
       select: { id: true, name: true, city: true, platform: true, phone: true, email: true, upiHandle: true },
     })
     res.status(201).json(ok(worker))
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+  } catch (error: unknown) {
+    if (
+      typeof error === 'object' &&
+      error !== null &&
+      'code' in error &&
+      (error as { code: string }).code === 'P2002'
+    ) {
       res.status(409).json(fail('DUPLICATE_PHONE', 'This number is already registered. Use Existing user to sign in.'))
       return
     }
