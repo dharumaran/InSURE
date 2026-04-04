@@ -55,6 +55,8 @@
 | 10 | [📊 Business Viability](#-business-viability) | Unit economics + CAR |
 | 10 | [🗺️ Development Roadmap](#️-development-roadmap) | Phase-by-phase plan |
 
+**Production deploy (Vercel API + web + admin, Netlify static option):** see [DEPLOY.md](./DEPLOY.md).
+
 ---
 
 ## 🎯 The Problem We're Solving

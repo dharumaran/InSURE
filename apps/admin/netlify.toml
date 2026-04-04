@@ -1,0 +1,9 @@
+# In Netlify: set "Base directory" to apps/admin.
+[build]
+  command = "cd ../.. && npm ci && npm run build --workspace @shieldride/admin"
+  publish = "dist"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

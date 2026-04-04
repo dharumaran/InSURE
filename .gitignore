@@ -1,0 +1,13 @@
+node_modules
+.DS_Store
+dist
+.turbo
+.cache
+.vite
+.env
+.env.local
+*.log
+*.tsbuildinfo
+
+.vercel
+

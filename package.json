@@ -1,0 +1,30 @@
+{
+  "name": "shieldride",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*",
+    "services/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev -ws",
+    "build": "npm run build -ws",
+    "lint": "npm run lint -ws",
+    "typecheck": "npm run typecheck -ws",
+    "format": "prettier -w .",
+    "db:migrate": "npm --workspace services/api run db:migrate",
+    "db:seed": "npm --workspace services/api run db:seed",
+    "build:shared": "npm run build --workspace @shieldride/shared",
+    "build:web": "npm run build --workspace @shieldride/web",
+    "build:admin": "npm run build --workspace @shieldride/admin",
+    "build:api": "npm run build:shared && npm run build --workspace @shieldride/api",
+    "vercel:api:build": "npm run build:shared && npx prisma generate --schema=services/api/prisma/schema.prisma"
+  },
+  "devDependencies": {
+    "prettier": "^3.6.2",
+    "typescript": "^5.9.2"
+  }
+}
+
