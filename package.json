@@ -17,6 +17,7 @@
     "format": "prettier -w .",
     "db:migrate": "npm --workspace services/api run db:migrate",
     "db:seed": "npm --workspace services/api run db:seed",
+    "ml:train": "python services/ml/scripts/generate_and_train.py",
     "build:shared": "npm run build --workspace @shieldride/shared",
     "build:web": "npm run build --workspace @shieldride/web",
     "build:admin": "npm run build --workspace @shieldride/admin",

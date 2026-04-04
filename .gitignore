@@ -11,3 +11,7 @@ dist
 
 .vercel
 
+__pycache__/
+*.py[cod]
+services/ml/app/**/__pycache__/
+

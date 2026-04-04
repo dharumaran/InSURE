@@ -18,7 +18,7 @@ export type TriggerEvalInput = {
   baselineIncomePaise: number
 }
 
-function istHour24(d: Date): number {
+export function hourIST(d: Date): number {
   const parts = new Intl.DateTimeFormat('en-IN', {
     timeZone: 'Asia/Kolkata',
     hour: '2-digit',
@@ -29,7 +29,7 @@ function istHour24(d: Date): number {
 }
 
 export function evaluateTriggers(input: TriggerEvalInput): TriggerActive[] {
-  const hourIst = istHour24(input.now)
+  const hourIst = hourIST(input.now)
   const isHeatWindow = hourIst >= 11 && hourIst < 16
   const hasMinOrders = input.orderDensity >= 5
 

@@ -1,8 +1,12 @@
-import { computeRiskScore } from '@shieldride/shared'
 import { Router } from 'express'
 import { fail, ok } from '../http/envelope.js'
+import {
+  mlTriggerProbabilities,
+  resolveRiskScore,
+  triggersFromMlProbabilities,
+} from '../services/mlClient.js'
 import { resolveLatestSensorReading } from '../services/sensorReadings.js'
-import { evaluateTriggers } from '../services/triggerEngine.js'
+import { evaluateTriggers, hourIST, type TriggerEvalInput } from '../services/triggerEngine.js'
 
 const router = Router()
 
@@ -20,7 +24,7 @@ router.get('/risk', async (req, res) => {
   try {
     const city = String(req.query['city'] ?? 'Mumbai')
     const latest = await resolveLatestSensorReading(city)
-    const risk = computeRiskScore({
+    const risk = await resolveRiskScore({
       rainfallMmHr: latest.rainfallMmHr,
       heatIndexC: latest.heatIndexC,
       aqiScore: latest.aqiScore,
@@ -37,23 +41,40 @@ router.get('/triggers', async (req, res) => {
   try {
     const city = String(req.query['city'] ?? 'Mumbai')
     const latest = await resolveLatestSensorReading(city)
-    const triggers = evaluateTriggers({
+    const now = new Date()
+    const sustained = {
+      rainfall: latest.rainfallMmHr > 35 ? 60 : 0,
+      heat: latest.heatIndexC > 42 ? 50 : 0,
+      aqi: latest.aqiScore > 300 ? 190 : 0,
+      outage: latest.platformStatus !== 'online' ? 100 : 0,
+      demand: latest.cancelRatePct > 45 ? 130 : 0,
+    }
+    const evalInput: TriggerEvalInput = {
       rainfallMmHr: latest.rainfallMmHr,
       heatIndexC: latest.heatIndexC,
       aqiScore: latest.aqiScore,
       cancelRatePct: latest.cancelRatePct,
       platformStatus: latest.platformStatus as 'online' | 'degraded' | 'outage',
       orderDensity: latest.orderDensity,
-      now: new Date(),
+      now,
       baselineIncomePaise: 65000,
-      sustainedMinutes: {
-        rainfall: latest.rainfallMmHr > 35 ? 60 : 0,
-        heat: latest.heatIndexC > 42 ? 50 : 0,
-        aqi: latest.aqiScore > 300 ? 190 : 0,
-        outage: latest.platformStatus !== 'online' ? 100 : 0,
-        demand: latest.cancelRatePct > 45 ? 130 : 0,
-      },
+      sustainedMinutes: sustained,
+    }
+    const probs = await mlTriggerProbabilities({
+      rainfallMmHr: latest.rainfallMmHr,
+      heatIndexC: latest.heatIndexC,
+      aqiScore: latest.aqiScore,
+      cancelRatePct: latest.cancelRatePct,
+      platformStatus: latest.platformStatus,
+      orderDensity: latest.orderDensity,
+      hourIST: hourIST(now),
+      sustainedRainMinutes: sustained.rainfall,
+      sustainedHeatMinutes: sustained.heat,
+      sustainedAqiMinutes: sustained.aqi,
+      sustainedOutageMinutes: sustained.outage,
+      sustainedDemandMinutes: sustained.demand,
     })
+    const triggers = probs ? triggersFromMlProbabilities(probs, evalInput) : evaluateTriggers(evalInput)
     res.json(ok(triggers))
   } catch (error) {
     res.status(500).json(fail('SENSOR_TRIGGERS_FAILED', 'Unable to evaluate triggers', error))

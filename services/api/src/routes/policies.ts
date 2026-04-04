@@ -1,9 +1,9 @@
-import { computeRiskScore } from '@shieldride/shared'
 import { Router } from 'express'
 import { z } from 'zod'
 import { prisma } from '../db.js'
 import { fail, ok } from '../http/envelope.js'
 import { validateBody } from '../middleware/validate.js'
+import { resolveRiskScore } from '../services/mlClient.js'
 import { resolveLatestSensorReading } from '../services/sensorReadings.js'
 
 const router = Router()
@@ -38,7 +38,7 @@ router.post('/', validateBody(createSchema), async (req, res) => {
       return
     }
     const latest = await resolveLatestSensorReading(worker.city)
-    const risk = computeRiskScore({
+    const risk = await resolveRiskScore({
       rainfallMmHr: latest.rainfallMmHr,
       heatIndexC: latest.heatIndexC,
       aqiScore: latest.aqiScore,

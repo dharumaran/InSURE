@@ -56,12 +56,15 @@ services:
     container_name: shieldride-api
     env_file:
       - ./services/api/.env
+    environment:
+      ML_SERVICE_URL: http://ml:8001
     ports:
       - "3001:3001"
     depends_on:
       - postgres
       - redis
       - kafka
+      - ml
     networks:
       - shieldride-network
 

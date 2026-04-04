@@ -8,6 +8,7 @@ import { logger } from './logger.js'
 import { fail, ok } from './http/envelope.js'
 import adminRoutes from './routes/admin.js'
 import authRoutes from './routes/auth.js'
+import fraudRoutes from './routes/fraud.js'
 import payoutsRoutes from './routes/payouts.js'
 import premiumRoutes from './routes/premium.js'
 import policiesRoutes from './routes/policies.js'
@@ -59,6 +60,7 @@ export function createApp(): express.Express {
   })
 
   app.use('/api/auth', authRoutes)
+  app.use('/api/fraud', fraudRoutes)
   app.use('/api/workers', workersRoutes)
   app.use('/api/policies', policiesRoutes)
   app.use('/api/premium', premiumRoutes)

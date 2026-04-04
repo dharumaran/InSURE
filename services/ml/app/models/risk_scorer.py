@@ -1,28 +1,54 @@
-"""Phase-1: deterministic R_w + premium (matches Node shared formula). XGBoost hook for later."""
+"""XGBoost regressor (Booster API) trained on synthetic data."""
 
 from __future__ import annotations
 
+from pathlib import Path
 
-def _clamp01(x: float) -> float:
-    return max(0.0, min(1.0, x))
+import numpy as np
+import xgboost as xgb
+
+_ART = Path(__file__).resolve().parent.parent.parent / "artifacts"
+_BOOSTER: xgb.Booster | None = None
+
+WEEKLY_PREMIUM_BASE = 30.0
+WEEKLY_PREMIUM_ALPHA = 0.7
+WEEKLY_PREMIUM_MIN = 20
+WEEKLY_PREMIUM_MAX = 50
+
+
+def _booster() -> xgb.Booster:
+    global _BOOSTER
+    if _BOOSTER is None:
+        path = _ART / "risk_xgb.json"
+        if not path.is_file():
+            raise FileNotFoundError(f"Missing {path}; run: python scripts/generate_and_train.py")
+        b = xgb.Booster()
+        b.load_model(str(path))
+        _BOOSTER = b
+    return _BOOSTER
 
 
 def predict_risk_premium(features: dict) -> tuple[float, float]:
-    r = features["rainfallMmHr"]
-    h = features["heatIndexC"]
-    a = float(features["aqiScore"])
-    c = features["cancelRatePct"]
-    st = features["platformStatus"]
-
-    R = _clamp01(r / 75)
-    H = _clamp01(max(0.0, (h - 30) / 17))
-    A = _clamp01(a / 380)
-    O = 1.0 if st == "degraded" else 0.1
-    Cc = _clamp01(c / 58)
-    rw = _clamp01(R * 0.25 + H * 0.15 + A * 0.10 + O * 0.20 + Cc * 0.15)
-    prem = min(max(round(75 * (1 + 0.7 * rw)), 80), 120)
+    plat = str(features["platformStatus"])
+    p0 = 1.0 if plat == "online" else 0.0
+    p1 = 1.0 if plat == "degraded" else 0.0
+    p2 = 1.0 if plat == "outage" else 0.0
+    X = np.array(
+        [
+            [
+                float(features["rainfallMmHr"]),
+                float(features["heatIndexC"]),
+                float(features["aqiScore"]),
+                float(features["cancelRatePct"]),
+                p0,
+                p1,
+                p2,
+            ]
+        ],
+        dtype=np.float32,
+    )
+    d = xgb.DMatrix(X)
+    rw = float(np.clip(_booster().predict(d)[0], 0.0, 1.0))
+    raw = round(WEEKLY_PREMIUM_BASE * (1.0 + WEEKLY_PREMIUM_ALPHA * rw))
+    prem = min(max(raw, WEEKLY_PREMIUM_MIN), WEEKLY_PREMIUM_MAX)
     return rw, float(prem)
-
-
-def train_stub():
-    return None

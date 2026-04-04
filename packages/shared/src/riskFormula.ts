@@ -21,12 +21,20 @@ export type RiskInputs = {
   platformStatus: PlatformStatus
 }
 
-export function computeRiskScore(inputs: RiskInputs): RiskScoreResult {
+export type RiskComponents = { R: number; H: number; A: number; O: number; C: number }
+
+/** Feature components (same geometry as the legacy formula) for UI when ML supplies R_w only. */
+export function computeRiskFeatureComponents(inputs: RiskInputs): RiskComponents {
   const R = clamp01(inputs.rainfallMmHr / 75)
   const H = clamp01(Math.max(0, (inputs.heatIndexC - 30) / 17))
   const A = clamp01(inputs.aqiScore / 380)
   const O = inputs.platformStatus === 'degraded' ? 1.0 : 0.1
   const C = clamp01(inputs.cancelRatePct / 58)
+  return { R, H, A, O, C }
+}
+
+export function computeRiskScore(inputs: RiskInputs): RiskScoreResult {
+  const { R, H, A, O, C } = computeRiskFeatureComponents(inputs)
 
   const riskScore = clamp01(R * 0.25 + H * 0.15 + A * 0.1 + O * 0.2 + C * 0.15)
 

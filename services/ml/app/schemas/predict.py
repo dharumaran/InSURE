@@ -19,6 +19,14 @@ class TriggerProbRequest(BaseModel):
     heatIndexC: float
     aqiScore: int
     cancelRatePct: float
+    platformStatus: str = "online"
+    orderDensity: float = 6.0
+    hourIST: int = Field(default=12, ge=0, le=23)
+    sustainedRainMinutes: float = 0.0
+    sustainedHeatMinutes: float = 0.0
+    sustainedAqiMinutes: float = 0.0
+    sustainedOutageMinutes: float = 0.0
+    sustainedDemandMinutes: float = 0.0
 
 
 class TriggerProbResponse(BaseModel):
