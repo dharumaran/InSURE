@@ -3,5 +3,11 @@
   "installCommand": "npm ci",
   "buildCommand": "npm run build --workspace @shieldride/admin",
   "outputDirectory": "apps/admin/dist",
-  "framework": null
+  "framework": null,
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://shieldride-api.vercel.app/api/:path*"
+    }
+  ]
 }

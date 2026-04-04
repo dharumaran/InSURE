@@ -55,7 +55,9 @@ export async function unwrap<T>(p: Promise<AxiosResponse<unknown>>): Promise<T> 
 
     if (res.status === 404) {
       throw new Error(
-        'API route not found. Use `npm run dev` in apps/web (proxies /api → port 3001), or `vite preview` with the same proxy — not a static file server alone.',
+        import.meta.env.DEV
+          ? 'API returned 404. Start the API on port 3001 (e.g. `npm run dev:web` from repo root). OTP is demo-only — no SMS provider is required.'
+          : 'API route not found on this host. Deploy the web app with Vercel/Netlify rewrites to your API (see apps/web/vercel.json), or build with VITE_API_URL set to your API origin. OTP is simulated in-app (use 123456); no external SMS API is required.',
       )
     }
     throw new Error(`Request failed (${res.status})`)

@@ -37,13 +37,17 @@ Environment variables (API project):
 
 ### 2) Worker PWA (`apps/web` project)
 
+`vercel.web.json` includes **`/api/*` rewrites** to `https://shieldride-api.vercel.app` so the PWA can call `/api/...` on the **same** Vercel URL without `VITE_API_URL` (avoids 404 on Send OTP). Change the rewrite target if your API uses another domain.
+
 **CLI from repo root** (after linking `apps/web` once with `cd apps/web && vercel link`):
 
 ```bash
 export VERCEL_ORG_ID=...   # from apps/web/.vercel/project.json
 export VERCEL_PROJECT_ID=... 
-npx vercel deploy --prod --yes --local-config vercel.web.json --build-env VITE_API_URL=https://YOUR-API.vercel.app
+npx vercel deploy --prod --yes --local-config vercel.web.json
 ```
+
+Optional: `--build-env VITE_API_URL=https://YOUR-API.vercel.app` if you prefer direct cross-origin calls instead of rewrites.
 
 **Git:** Root Directory = `apps/web`, install/build must run from monorepo root (see `apps/web/vercel.json`).
 
@@ -61,7 +65,7 @@ For **web** and **admin**:
 
 1. Create two Netlify sites.
 2. Set **Base directory** to `apps/web` or `apps/admin`.
-3. Use the included `netlify.toml` in each app folder (build runs from repo root via `cd ../..`).
+3. Use the included `netlify.toml` in each app folder (build runs from repo root via `cd ../..`). The web `netlify.toml` proxies `/api/*` to the ShieldRide API so Send OTP works without `VITE_API_URL`; adjust the URL if your API host differs.
 
 Set **`VITE_API_URL`** in Netlify → Site settings → Environment variables (build-time).
 
