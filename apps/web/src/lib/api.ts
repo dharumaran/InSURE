@@ -3,10 +3,15 @@ import axios, { type AxiosError, type AxiosResponse } from 'axios'
 import type { ApiEnvelope, IncomeDay, PayoutRow, SensorLatest, WorkerProfile } from '@/types'
 import { useWorkerStore } from '@/stores/workerStore'
 
-// If VITE_API_URL is set, use it in dev and prod (works even when Vite’s /api proxy isn’t used).
-// If unset in dev, use same-origin `/api` so Vite can proxy (good for phone-on-LAN: open http://<PC-IP>:5173).
+// Development: always use same-origin `/api` so Vite proxies to the API (vite.config server.proxy).
+// Avoid VITE_API_URL=http://localhost:3001 in dev — that bypasses the proxy and fails with ERR_NETWORK if the API is down.
+// Production / preview: set VITE_API_URL at build time (e.g. https://shieldride-api.vercel.app).
+// To call a remote API from the Vite dev server, set VITE_DEV_API_URL (see below).
 const envApi = import.meta.env.VITE_API_URL?.trim() ?? ''
-const baseURL = envApi !== '' ? envApi : import.meta.env.DEV ? '' : ''
+const devDirectApi = import.meta.env.VITE_DEV_API_URL?.trim() ?? ''
+const baseURL = import.meta.env.DEV
+  ? devDirectApi || ''
+  : envApi
 
 export const api = axios.create({
   baseURL,
@@ -61,7 +66,9 @@ export async function unwrap<T>(p: Promise<AxiosResponse<unknown>>): Promise<T> 
     }
     if (ax.code === 'ERR_NETWORK' || ax.message === 'Network Error') {
       throw new Error(
-        'Cannot reach API. Start the backend (port 3001), keep `npm run dev` for the web app, and use the Vite /api proxy in development.',
+        import.meta.env.DEV
+          ? 'Cannot reach API. From repo root run: npm run dev:web (starts API on 3001 + Vite). Or run `npm run dev --workspace @shieldride/api` in one terminal and `npm run dev --workspace @shieldride/web` in another. Do not set VITE_API_URL to localhost in apps/web/.env — leave it unset so /api uses the Vite proxy.'
+          : 'Cannot reach API. Check VITE_API_URL and that the API is online.',
       )
     }
     throw e

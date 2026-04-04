@@ -1,8 +1,9 @@
 /// <reference types="vite/client" />
 
 interface ImportMetaEnv {
-  readonly VITE_API_URL: string
-  readonly VITE_MOCK_SENSORS: string
+  readonly VITE_API_URL?: string
+  readonly VITE_DEV_API_URL?: string
+  readonly VITE_MOCK_SENSORS?: string
 }
 
 interface ImportMeta {

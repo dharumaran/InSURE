@@ -10,6 +10,7 @@
   ],
   "scripts": {
     "dev": "npm run dev -ws",
+    "dev:web": "concurrently -k -n api,web -c cyan,magenta \"npm run dev --workspace @shieldride/api\" \"npm run dev --workspace @shieldride/web\"",
     "build": "npm run build -ws",
     "lint": "npm run lint -ws",
     "typecheck": "npm run typecheck -ws",
@@ -23,6 +24,7 @@
     "vercel:api:build": "npm run build:shared && npx prisma generate --schema=services/api/prisma/schema.prisma"
   },
   "devDependencies": {
+    "concurrently": "^9.2.1",
     "prettier": "^3.6.2",
     "typescript": "^5.9.2"
   }
